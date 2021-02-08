@@ -1,0 +1,194 @@
+---
+title: "Project 1"
+author: "Sherry Huang"
+output: 
+  pdf_document: 
+    highlight: pygments
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(maps)
+library(scales)
+library(ggthemes)
+library(RColorBrewer)
+library(extrafont)
+library(ggforce)
+```
+
+# Replicating an Existing Graph
+
+```{r data}
+life_expectancy =
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-07-03/week14_global_life_expectancy.csv")
+life_expectancy <- life_expectancy %>% filter(year == 2015)
+```
+
+```{r replication-dataset}
+world <- map_data("world")
+expectancy = left_join(world, life_expectancy, by = c("region" = "country"))
+```
+
+```{r replication, fig.width = 8}
+expectancy = expectancy %>% 
+  mutate(age = case_when(
+    life_expectancy > 50 & life_expectancy <= 55 ~ "50-55",
+    life_expectancy > 55 & life_expectancy <= 60 ~ "55-60",
+    life_expectancy > 60 & life_expectancy <= 65 ~ "60-65",
+    life_expectancy > 65 & life_expectancy <= 70 ~ "65-70",
+    life_expectancy > 70 & life_expectancy <= 75 ~ "70-75",
+    life_expectancy > 75 & life_expectancy <= 80 ~ "75-80",
+    life_expectancy > 80 ~ "80+ years"))
+
+p0 <- ggplot(data = expectancy,
+             mapping = aes(x = long, y = lat, group = group, fill = age))
+
+p1 <- p0 + geom_polygon(color = "gray90", size = 0.1)
+
+p2 <- p1 + scale_fill_brewer(palette = "Spectral", na.value = "gray", direction = 1) +
+  labs(title = "Life Expectancy 2015",
+       caption = "SOURCE: https://ourworldindata.org/life-expectancy")
+
+p2 + labs(fill = "age") + theme_void() + theme(text = element_text(family = "Arial"),
+                                               legend.position = "bottom",
+                                               legend.direction = "horizontal") +
+  guides(fill = guide_legend(nrow = 1))
+```
+
+\newpage
+
+# Glow-Up
+
+```{r glow-up-dataset}
+worldtilegrid <- read.csv("worldtilegrid.csv")
+
+worldgrid = left_join(worldtilegrid, life_expectancy, by = c("alpha.3" = "code"))
+
+worldgrid = worldgrid %>% 
+  mutate(age = case_when(
+    life_expectancy > 50 & life_expectancy <= 55 ~ "50-55",
+    life_expectancy > 55 & life_expectancy <= 60 ~ "55-60",
+    life_expectancy > 60 & life_expectancy <= 65 ~ "60-65",
+    life_expectancy > 65 & life_expectancy <= 70 ~ "65-70",
+    life_expectancy > 70 & life_expectancy <= 75 ~ "70-75",
+    life_expectancy > 75 & life_expectancy <= 80 ~ "75-80",
+    life_expectancy > 80 ~ "80+"))
+```
+
+```{r, glow-up, fig.height = 20, fig.width = 50}
+mytheme <- theme_economist() + theme(panel.grid = element_blank(),
+                                     axis.text = element_blank(),
+                                     axis.title = element_blank(),
+                                     text = element_text(family = "Arial"))
+
+worldgridplot <- ggplot(worldgrid, aes(xmin = x, ymin = y, xmax = x + 1, ymax = y + 1,
+                                       fill = age))
+
+worldgridplot + geom_rect(color = "#ffffff") + mytheme +
+  geom_text(aes(x = x, y = y, label = stringr::str_wrap(name, 10)), color = "#000000",
+            alpha = 0.5, nudge_x = 0.5, nudge_y = -0.5, size = 3) + 
+  scale_y_reverse() + 
+  scale_fill_brewer(palette = "Spectral", na.value = "gray") +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        text = element_text(family = "Arial")) +
+  guides(fill = guide_legend(nrow = 1)) +
+  coord_equal() +
+  labs(title = "Life Expectancy 2015",
+       caption = "SOURCE: https://ourworldindata.org/life-expectancy")
+```
+
+\newpage
+
+# Glow-Down
+
+```{r, glow-down, fig.width = 15, fig.height = 15}
+pie_expectancy = life_expectancy %>% 
+  mutate(age = case_when(
+    life_expectancy > 50 & life_expectancy <= 55 ~ "50-55",
+    life_expectancy > 55 & life_expectancy <= 60 ~ "55-60",
+    life_expectancy > 60 & life_expectancy <= 65 ~ "60-65",
+    life_expectancy > 65 & life_expectancy <= 70 ~ "65-70",
+    life_expectancy > 70 & life_expectancy <= 75 ~ "70-75",
+    life_expectancy > 75 & life_expectancy <= 80 ~ "75-80",
+    life_expectancy > 80 ~ "80+"))
+
+pie_data <- na.omit(pie_expectancy)
+
+myPalette <- brewer.pal(7, "Spectral") 
+  
+mytable <- table(pie_data$age)
+pie(mytable, labels = c("50-55\n (CAF, TCD, CIV,\n LSO, NGA, SLE)",
+                        "55-60\n (BFA, BDI, CMR, COD, GNQ,\n GIN, GNB, MLI, MOZ, NER,\n SOM, SSD, SWZ, TGO, UGA)",
+                        "60-65\n (AFG, AGO, BEN, COM, COG,\n DJI, ERI, GMB, GHA, HTI,\n LBR, MWI, MRT, NAM, ZAF,\n SDN, TZA, YEM, ZMB, ZWE)",
+                        "65-70\n (BTN, BOL, BWA, KHM, ETH, GAB, GUY, IND, IDN, IRQ,\n KAZ, KEN, KIR, LAO, MDG, OWID-MNS, FSM, MNG, MMR, NPL,\n PAK, PNG, PHL, RWA, STP, SEN, SYR, TLS, TKM, ESH)",
+                        "70-75\n (ARM, AZE, BGD, BLR, BLZ,\n BGR, CPV, COL, DOM, EGY,\n SLV, FJI, GEO, GRD, GTM,\n HND, JOR, KWT, KGZ, LVA,\n LBY, LTU, MUS, MDA, PRK,\n PSE, PRY, PER, RUS, VCT,\n WSM, SAU, SYC, SLB, SUR,\n TJK, TON, TTO, UKR, UZB,\n VUT, VEN, OWID-WRL)",
+                        "75-80\n (ALB, DZA, ATG, ARG, ABW, BHS, BHR, BRB, BIH, BRA, BRN, CHL, CHN,\n CRI, HRV, CUB, CUW, CZE, ECU, EST, GUF, PYF, GUM, HUN, IRN, JAM,\n LBN, MKD, MYS, MDV, MYT, MEX, MNE, MAR, NCL, NIC, OMN, PAN,\n POL, OWID-PYA, PRI, QAT, ROU, LCA, SVK, LKA, TWN, THA, TUN, TUR,\n ARE, USA, VIR, URY, VNM)",
+                        "80+\n (AUS, AUT, BEL, CAN, OWID-CIS,\n CYP, DNK, FIN, FRA, DEU,\n GRC, GLP, HKG, ISL, IRL,\n ISR, ITA, JPN, LUX, MAC,\n MLT, MTQ, NLD, NZL, NOR,\n PRT, REU, SGP, SVN, KOR,\n ESP, SWE, CHE, GBR)"),
+    main="Pie Chart of Life Expectancy (in years)\n countries/regions shown by their ISO codes",
+    border = "white", col = myPalette)
+```
+
+\newpage
+
+# Summary
+
+  The graph I chose to replicate in my project comes from the website, *https://ourworldindata.org/life-expectancy* (the first graph, under the section titled "Differences in life expectancy across the world"), and the data can be found from the GitHub Repo, *https://github.com/rfordatascience/tidytuesday/blob/master/data/2018/2018-07-03/week14_global_life_expectancy.csv*. The original graphic is interactive, showing life expectancies from $1543$ to $2019$. I mainly viewed the graph as a static one of Life Expectancies in $2015$ (this was the most recent year in the dataset they provided), which is what I replicated. When viewing it as a static graph, I do have a few critiques. The first is that I don't think there are any countries with a life expectancy of less than $50$ years old, so almost half of the scale is irrelevant. They could have removed that part of the scale and either left it like that or split the scale up into even smaller age intervals. (However, I will note that as an interactive graph that shows life expectancy from $1543$ to $2019$, there were time periods where life expectancy was that low, and I think changing the scale would have been confusing, so I do understand why it was made that way.) Another critique of the graph is that there really was no reason for it to be represented on a world map, other than the familiarity of the geography, because our main message isn't the geography. Having it on the world map makes it very difficult to find and see small countries and identify their color/life expectancy. (Again, the interactiveness helped a little bit, as you could hover over countries and it would display that information.) Some things I liked about the graph: the scale was split nicely. Intervals of $5$ years were proportional to the intervals of $10$ years. However, I do think adding "years" on every label of the scale was a little redundant. In conclusion, this graph is meant to show life expectancy, which is a measure of premature death, and it also shows differences in health around the world. Overall, this graph does a nice job displaying that information.
+
+  In my redesign of the graph, I wanted to try and fix some of the issues I noted in my analysis, mainly the issue with small countries that are hard to see. My redesign was a "statebins" version of the world map, with the color representing which age range the country's life expectancy falls within. I did this because, as I stated in my analysis above, small countries were very hard to see, especially when the graph isn't interactive. Though it doesn't look as pretty as a world map, I think this fixes a lot of the issues I mentioned in my analysis. It's possible to now see the smaller countries and their life expectancies, but the general geography of the countries and continents are relatively the same so the audience can easily locate countries and identify general trends within continents. For example, it's easy to see that most European countries have higher life expectancies, and many African countries have lower life expectancies.
+  
+  My glow-down is a pie chart. The "slices"/colors represent the different age ranges, and each are labeled with their proper age ranges and countries. *The Truthful Art* by Albert Cairo describes five qualities of great visualizations: truthful, functional, beautiful, insightful, and enlightening. Bearing this in mind, my pie chart is a glow-down because, first, when I was looking up how to make pie charts, almost every article began with the disclaimer that pie charts are a terrible way to represent information. This is because humans are bad at reading angles with just the naked eye, so looking for the biggest group and ordering pie slices by value is hard to do. That information could easily be represented with a barplot or a tree map, to name a few. Additionally, it's EXTREMELY difficult to find a country on this chart; you have to know (or look up) its ISO code, and then look through every pie slice's label for it. This defeats the functionality of the graph. The pie chart also conceals some important information from the audience: on the original graph and my glow-up, it's possible to see continental trends of life expectancy, but there's no way of easily getting that from the pie chart. Therefore, this pie chart isn't really insightful in that regard.
+
+\newpage
+
+# Self-Grade
+
+  I think I got an excellent on this project. I think I met all the satisfactory requirements: I used a dataset that we have not discussed in class yet, I have included all the necessary code in this PDF, I believe this report is well-written and thoughtful, and it meets minimum submission quality. For the excellent criteria, I think I met the "an especially creative improvement" requirement. Even though my glow-up isn't exactly "beautiful," I think it's more functional than the original graph. Additionally, I did quite a bit of research in order to make it. There was no convenient "worldbins" package (at least, not that I was aware of), so I had to do quite a bit of research to find out how to make my glow-up graph. I ended up finding an amazing article that walked me through it (all credit goes to them: *https://www.maartenlambrechts.com/2017/10/22/tutorial-a-worldtilegrid-with-ggplot2.html*). They had a worldtilegrid CSV dataset, but the way they provided it, I had to copy and paste it into my own text editor and save it to my computer. I then had to transform the data a little bit by joining the worldtilegrid dataset provided by the website to my expectancy dataset. I got a little creative here and joined it by their ISO code, instead of their name, because (surprisingly) a country's ISO code is more universal than its name. This is how I was able to represent the US on my glow-up, when it was "N/A" in my replication. I also added a new "age" range variable into this new dataset. The code I used for my glow-up used geom_rect and geom_text, geoms that I don't believe we've discussed in class yet. I also changed the font to Arial, but I kept the color palette the same because I thought it was appropriate for our graph.
+  
+  I also did quite a bit of research to make the pie chart glow-down. There's no easy geom for the pie chart, so I also had to do some digging to find out how to make a pie chart (all credit goes to this website: *https://www.r-graph-gallery.com/pie-plot.html*). Making the pie chart actually wasn't particularly difficult, but creating the labels took A LOT of time. As you can see from the code, I had to manually type them all in. Then, I had to format the size of the graph output in the PDF properly so that all the country codes fit onto the PDF output. This part was mainly just tedious.
+  
+## Notes
+
+  There are some flaws with this project that I myself am aware of. The first is that in my replication, some countries are treated as "N/A" when they're shown on the original graph. This is because when I joined the world dataset that I got from R to my expectancy dataset that I got from the website, some countries had different names in both ("US" in world and "United States" in expectancy, etc.) Another flaw is with my glow-up world tile grid. I know it's not particularly beautiful, but I was focusing a lot on the functionality of it, particularly with the issues I pointed out in my analysis of the original graph. I did omit "N/A" data in the pie chart because I wasn't sure how to treat that variable in the making of the pie chart. And lastly, I couldn't get the code for my glow-down pie chart to wrap. The only things going off the page are all the ISO codes of the countries, though, so the important code should all be there.
+
+## Bonus
+
+Here are some charts I scrapped; I didn't have the heart to get rid of them completely because they were pretty cool (and also took up most of my weekend).
+
+  I made this pie chart because I thought all of our charts had to be made through ggplot, so I tried making the same pie chart using ggplot. It ended up successful, except for the fact that I couldn't add in the country labels like my actual glow-down pie chart. That would have actually meant withholding information from the audience, so I had to scrap this, but I'm proud that I managed to figure out how to make this pie chart with polar coordinates.
+
+```{r ggplot-glow-down}
+pie_chart = pie_data %>% 
+  mutate(grouping = case_when(
+    age == "50-55" ~ 1,
+    age == "55-60" ~ 2,
+    age == "60-65" ~ 3,
+    age == "65-70" ~ 4,
+    age == "70-75" ~ 5,
+    age == "75-80" ~ 6,
+    age == "80+" ~ 7))
+
+ggplot(pie_chart, aes(x = "", y = grouping, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  scale_fill_brewer(palette = "Spectral")
+```
+
+Below is another glow-down I was considering. However, this actually wasn't a terrible glow-down, in my opinion. It's split by continents so continental trends could still be seen, which was a main focus of my glow-up and glow-down. It even shows the actual life expectancy of each country, which is more information than the original gave. I guess the few critiques I would give it would be that there's redundant information: bar length showed the life expectancy, and the colors showed the age range of the life expectancy. Both customizations show essentially the same information, so having both isn't necessary. Another critique would be that the audience wouldn't be able to immediately guess what this graph is saying. If someone were to look at the original graph and, without even reading the labels, they would be able to tell that it was comparing something across countries all over the world. This graph, on the other hand, could be anything, and frankly looks more intimidating than a world map.
+
+```{r facet-glow-down, fig.height = 10, fig.width = 20}
+worldgrid_bar <- na.omit(worldgrid)
+
+ggplot(data = worldgrid_bar, mapping = aes(x = life_expectancy, y = name, fill = age)) +
+  geom_bar(mapping = aes(group = name), stat = "identity", width = 1) +
+  facet_row(vars(region), scales = "free_y") +
+  labs(title = "Life Expectancy 2015",
+       x = "life expectancy (years)",
+       y = "",
+       caption = "SOURCE: https://ourworldindata.org/life-expectancy") +
+  scale_fill_brewer(palette = "Spectral")
+```
