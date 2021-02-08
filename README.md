@@ -10,13 +10,19 @@ The graph I used comes from [Our World in Data](https://ourworldindata.org/life-
 
 In my replication, I treated the original graph as a static map representing life expectancy in 2015, because this was the most recent year available in the data set at the time. More notes about the graph can be found at the end of the paper, but some countries' life expectancies are not shown because country names did not line up across data sets.
 
+![](plots/life-expectancy-replication.png/)
+
 ## Glow-Up
 
 For the glow-up, the biggest issue I wanted to address was the idea that small countries were difficult to see. Because geographic size is not a priority in this visualization (that is, there's no reason countries *have* to be their respective sizes), I chose to re-design the original graph as a "binned" version. In this "glow-up," small countries are equally as visible as large countries, but the general shape and patterns of different continents are still visible.
 
+![](plots/life-expectancy-glowup.png/)
+
 ## Glow-Down
 
 I chose to make the original graph worse by re-designing it into a pie chart. Pie charts are notoriously bad for displaying data because humans are not good at measuring angles, which is exactly what pie charts do. For example, some pie "slices" can be difficult to tell which one is larger. Another detail that makes this re-design so inconvenient is that it's extremely difficult to find a specific country. Countries are only labeled by their 3-letter ISO code. And lastly, patterns in continents are very difficult to see. For example, European countries generally have a higher life expectancy, but that is not something that can be easily found in the pie chart.
+
+![](plots/life-expectancy-glowdown.png/)
 
 ## Details
 
